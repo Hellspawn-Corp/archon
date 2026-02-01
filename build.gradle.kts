@@ -68,7 +68,7 @@ extensions.findByName("fabricApi")?.let { ext ->
 dependencies {
     // To change the versions see the gradle.properties file
     add("minecraft", "com.mojang:minecraft:${minecraft_version}")
-    add("mappings", "net.fabricmc:yarn:${yarn_mappings}:v2")
+    add("mappings", loom.officialMojangMappings())
     add("modImplementation", "net.fabricmc:fabric-loader:${loader_version}")
 
     // Fabric API. This is technically optional, but you probably want it anyway.
