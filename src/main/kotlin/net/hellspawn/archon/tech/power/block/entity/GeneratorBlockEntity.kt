@@ -1,11 +1,11 @@
 package net.hellspawn.archon.tech.power.block.entity
 
-import net.minecraft.block.BlockState
-import net.minecraft.block.entity.BlockEntity
-import net.minecraft.block.entity.BlockEntityType
-import net.minecraft.storage.ReadView
-import net.minecraft.storage.WriteView
-import net.minecraft.util.math.BlockPos
+import net.minecraft.core.BlockPos
+import net.minecraft.world.level.block.entity.BlockEntity
+import net.minecraft.world.level.block.entity.BlockEntityType
+import net.minecraft.world.level.block.state.BlockState
+import net.minecraft.world.level.storage.ValueInput
+import net.minecraft.world.level.storage.ValueOutput
 
 class GeneratorBlockEntity(
     type: BlockEntityType<GeneratorBlockEntity>,
@@ -24,19 +24,19 @@ class GeneratorBlockEntity(
 
     fun generateEnergy() {
         energy += 10
-        markDirty() // Mark the block entity as dirty to ensure data is saved
+        setChanged() // Mark the block entity as dirty to ensure data is saved
     }
 
     fun getEnergy(): Int = energy
     @Override
-    override fun writeData(view: WriteView) {
-        super.writeData(view)
+    override fun saveAdditional(view: ValueOutput) {
+        super.saveAdditional(view)
         view.putInt(ENERGY_KEY, energy)
     }
 
     @Override
-    override fun readData(view: ReadView) {
-        super.readData(view)
-        energy = view.getInt(ENERGY_KEY, 0)
+    override fun loadAdditional(view: ValueInput) {
+        super.loadAdditional(view)
+        energy = view.getIntOr(ENERGY_KEY, 0)
     }
 }

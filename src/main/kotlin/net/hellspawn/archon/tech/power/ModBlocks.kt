@@ -1,21 +1,21 @@
 package net.hellspawn.archon.tech.power
 
-import net.hellspawn.archon.tech.Archontech.MOD_ID
-import net.hellspawn.archon.tech.power.block.GeneratorBlock
-import net.minecraft.block.AbstractBlock
-import net.minecraft.block.Block
-import net.minecraft.block.Blocks
-import net.minecraft.block.entity.BlockEntity
-import net.minecraft.block.entity.BlockEntityTicker
-import net.minecraft.block.entity.BlockEntityType
-import net.minecraft.item.BlockItem
-import net.minecraft.item.Item
-import net.minecraft.registry.Registries
-import net.minecraft.registry.Registry
-import net.minecraft.registry.RegistryKey
-import net.minecraft.registry.RegistryKeys
-import net.minecraft.util.Identifier
+import net.hellspawn.archon.tech.Archontech
+import net.minecraft.core.Registry
+import net.minecraft.core.registries.BuiltInRegistries
+import net.minecraft.core.registries.Registries
+import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceKey
+import net.minecraft.world.item.BlockItem
+import net.minecraft.world.item.Item
+import net.minecraft.world.level.block.Block
+import net.minecraft.world.level.block.Blocks
+import net.minecraft.world.level.block.entity.BlockEntity
+import net.minecraft.world.level.block.entity.BlockEntityTicker
+import net.minecraft.world.level.block.entity.BlockEntityType
+import net.minecraft.world.level.block.state.BlockBehaviour
 import java.util.function.Function
+
 
 object ModBlocks {
     lateinit var GENERATOR_BLOCK: Block
@@ -24,10 +24,10 @@ object ModBlocks {
         // TODO: Change this from stone to something else
         GENERATOR_BLOCK = register(
             "generator",
-            Function { settings -> GeneratorBlock(settings ?: AbstractBlock.Settings.create()) },
-            AbstractBlock.Settings.copy(Blocks.STONE),
+            Function { settings: BlockBehaviour.Properties -> Block(settings) },
+            BlockBehaviour.Properties.ofFullCopy(Blocks.FURNACE),
             true
-        )!!
+        )
     }
 
     fun <T : BlockEntity> createTicker(
@@ -40,27 +40,34 @@ object ModBlocks {
 
     private fun register(
         name: String,
-        blockFactory: Function<AbstractBlock.Settings?, Block?>,
-        settings: AbstractBlock.Settings,
-        shouldRegisterItem: Boolean = true
-    ): Block? {
-        val blockKey = keyOfBlock(name)
-        val block: Block? = blockFactory.apply(settings.registryKey(blockKey))
+        blockFactory: Function<BlockBehaviour.Properties?, Block>,
+        settings: BlockBehaviour.Properties,
+        shouldRegisterItem: Boolean
+    ): Block {
+        // Create a registry key for the block
+        val blockKey: ResourceKey<Block> = keyOfBlock(name)
+        // Create the block instance
+        val block: Block = blockFactory.apply(settings.setId(blockKey))
 
+        // Sometimes, you may not want to register an item for the block.
+        // Eg: if it's a technical block like `minecraft:moving_piston` or `minecraft:end_gateway`
         if (shouldRegisterItem) {
+            // Items need to be registered with a different type of registry key, but the ID
+            // can be the same.
             val itemKey = keyOfItem(name)
-            val blockItem = BlockItem(block, Item.Settings().registryKey(itemKey).useBlockPrefixedTranslationKey())
-            Registry.register(Registries.ITEM, itemKey, blockItem)
+
+            val blockItem = BlockItem(block, Item.Properties().setId(itemKey).useBlockDescriptionPrefix())
+            Registry.register(BuiltInRegistries.ITEM, itemKey, blockItem)
         }
 
-        return Registry.register(Registries.BLOCK, blockKey, block)
+        return Registry.register(BuiltInRegistries.BLOCK, blockKey, block)
     }
 
-    private fun keyOfBlock(name: String): RegistryKey<Block?> {
-        return RegistryKey.of(RegistryKeys.BLOCK, Identifier.of(MOD_ID, name))
+    private fun keyOfBlock(name: String): ResourceKey<Block> {
+        return ResourceKey.create(Registries.BLOCK, Identifier.fromNamespaceAndPath(Archontech.MOD_ID, name))
     }
 
-    private fun keyOfItem(name: String): RegistryKey<Item?> {
-        return RegistryKey.of(RegistryKeys.ITEM, Identifier.of(MOD_ID, name))
+    private fun keyOfItem(name: String): ResourceKey<Item> {
+        return ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(Archontech.MOD_ID, name))
     }
 }
